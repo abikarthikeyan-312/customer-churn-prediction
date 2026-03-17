@@ -1,0 +1,14 @@
+Flask==3.0.0
+Werkzeug==3.0.1
+pandas
+numpy
+scikit-learn
+xgboost
+shap
+plotly
+joblib
+Flask-SQLAlchemy
+PyMySQL
+Flask-Bcrypt
+Flask-Login
+cryptography

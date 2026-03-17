@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="header" style="display: flex; justify-content: space-between; align-items: flex-end;">
+    <div>
+        <h1>📈 Live Churn Monitoring</h1>
+        <p class="text-muted">Real-time analytics and predictive KPIs</p>
+    </div>
+    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <button onclick="window.print()" class="primary-btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
+            <i class="fa-solid fa-file-pdf"></i> Export PDF
+        </button>
+        <a href="/export_dashboard_csv?contract={{ active_contract }}&senior={{ active_senior }}" class="primary-btn btn-green" style="text-decoration: none;">
+            <i class="fa-solid fa-file-csv"></i> Export CSV
+        </a>
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-error">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <span>{{ error }}</span>
+</div>
+{% else %}
+<div class="card fade-in" style="margin-bottom: 30px; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between; padding: 20px;">
+    <h3 style="margin: 0; color: var(--text-primary);"><i class="fa-solid fa-filter" style="color: var(--accent-purple); margin-right: 10px;"></i> Interactive Filters</h3>
+    <form method="GET" action="/dashboard" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; margin: 0;">
+        <select name="contract" class="glass-input" style="width: 200px; margin: 0;">
+            <option value="All" {% if active_contract == 'All' %}selected{% endif %}>All Contracts</option>
+            <option value="Month-to-month" {% if active_contract == 'Month-to-month' %}selected{% endif %}>Month-to-month</option>
+            <option value="One year" {% if active_contract == 'One year' %}selected{% endif %}>One year</option>
+            <option value="Two year" {% if active_contract == 'Two year' %}selected{% endif %}>Two year</option>
+        </select>
+        
+        <select name="senior" class="glass-input" style="width: 200px; margin: 0;">
+            <option value="All" {% if active_senior == 'All' %}selected{% endif %}>All Demographics</option>
+            <option value="No" {% if active_senior == 'No' %}selected{% endif %}>Non-Senior Citizens</option>
+            <option value="Yes" {% if active_senior == 'Yes' %}selected{% endif %}>Senior Citizens</option>
+        </select>
+        
+        <button type="submit" class="primary-btn" style="padding: 10px 20px;"><i class="fa-solid fa-rotate"></i> Apply Filters</button>
+    </form>
+</div>
+
+<div class="metrics-grid">
+    <div class="metric-card">
+        <div class="metric-header">
+            <h3>Total Customers</h3>
+            <div class="metric-icon icon-blue"><i class="fa-solid fa-users"></i></div>
+        </div>
+        <div class="value val-blue">{{ metrics.total_customers }}</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-header">
+            <h3>Churn Rate</h3>
+            <div class="metric-icon icon-red"><i class="fa-solid fa-chart-line"></i></div>
+        </div>
+        <div class="value val-red">{{ "%.1f"|format(metrics.churn_rate) }}%</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-header">
+            <h3>Avg Tenure</h3>
+            <div class="metric-icon icon-green"><i class="fa-regular fa-calendar-check"></i></div>
+        </div>
+        <div class="value val-green">{{ "%.1f"|format(metrics.avg_lifetime) }} mo</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-header">
+            <h3>Avg MRR</h3>
+            <div class="metric-icon icon-purple"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+        </div>
+        <div class="value val-purple">${{ "%.2f"|format(metrics.avg_mrr) }}</div>
+    </div>
+</div>
+
+<div class="charts-grid fade-in">
+    <div class="card">
+        <div class="chart-title"><i class="fa-solid fa-file-signature" style="color:var(--accent-blue)"></i> Churn by
+            Contract Type</div>
+        <div id="chart-contract"></div>
+    </div>
+    <div class="card">
+        <div class="chart-title"><i class="fa-solid fa-money-bill-wave" style="color:var(--accent-green)"></i> Monthly
+            Charges Distribution</div>
+        <div id="chart-monthly"></div>
+    </div>
+    <div class="card">
+        <div class="chart-title"><i class="fa-solid fa-wifi" style="color:var(--accent-purple)"></i> Churn by Internet
+            Service</div>
+        <div id="chart-internet"></div>
+    </div>
+    <div class="card">
+        <div class="chart-title"><i class="fa-solid fa-hourglass-half" style="color:var(--accent-red)"></i> Tenure vs.
+            Churn Risk</div>
+        <div id="chart-tenure"></div>
+    </div>
+</div>
+
+<script>
+    // Render Plotly charts dynamically based on Theme
+    const chartsStr = '{{ charts|tojson|safe }}';
+    const charts = JSON.parse(chartsStr);
+    
+    function applyThemeToLayout(layout) {
+        let newLayout = JSON.parse(JSON.stringify(layout)); // deep copy
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        
+        // Make backgrounds completely transparent so glass CSS shows through
+        newLayout.paper_bgcolor = 'rgba(0,0,0,0)';
+        newLayout.plot_bgcolor = 'rgba(0,0,0,0)';
+        
+        if (!newLayout.font) newLayout.font = {};
+        
+        if (currentTheme === 'light') {
+            newLayout.font.color = '#0f172a'; // Dark text for bright backgrounds
+        } else {
+            newLayout.font.color = '#f8fafc'; // Bright text for dark backgrounds
+        }
+        
+        return newLayout;
+    }
+
+    if (charts.contract_churn) Plotly.newPlot('chart-contract', charts.contract_churn.data, applyThemeToLayout(charts.contract_churn.layout));
+    if (charts.monthly_charges) Plotly.newPlot('chart-monthly', charts.monthly_charges.data, applyThemeToLayout(charts.monthly_charges.layout));
+    if (charts.internet_service) Plotly.newPlot('chart-internet', charts.internet_service.data, applyThemeToLayout(charts.internet_service.layout));
+    if (charts.tenure) Plotly.newPlot('chart-tenure', charts.tenure.data, applyThemeToLayout(charts.tenure.layout));
+    
+    // Listen for theme changes to automatically re-render without page refresh
+    const originalSetTheme = window.setTheme;
+    window.setTheme = function(theme) {
+        originalSetTheme(theme); // Update CSS & LocalStorage
+        // Re-render plotly 
+        if (charts.contract_churn) Plotly.react('chart-contract', charts.contract_churn.data, applyThemeToLayout(charts.contract_churn.layout));
+        if (charts.monthly_charges) Plotly.react('chart-monthly', charts.monthly_charges.data, applyThemeToLayout(charts.monthly_charges.layout));
+        if (charts.internet_service) Plotly.react('chart-internet', charts.internet_service.data, applyThemeToLayout(charts.internet_service.layout));
+        if (charts.tenure) Plotly.react('chart-tenure', charts.tenure.data, applyThemeToLayout(charts.tenure.layout));
+    }
+</script>
+{% endif %}
+
+{% endblock %}

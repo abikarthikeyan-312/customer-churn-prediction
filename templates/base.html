@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Churn Intelligence</title>
+    <!-- Modern Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Plotly -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <!-- Theme & Sidebar Initializer (Must be in head to prevent flicker) -->
+    <script>
+        const savedTheme = localStorage.getItem('app-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        const savedSidebar = localStorage.getItem('app-sidebar') || 'expanded';
+        if (savedSidebar === 'minimized') {
+            document.documentElement.classList.add('sidebar-minimized');
+        }
+    </script>
+</head>
+<body>
+
+{% if session.get('logged_in') %}
+<div class="sidebar">
+    <div class="sidebar-header" style="justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 12px; overflow: hidden;" class="logo-container">
+            <i class="fa-solid fa-cube" style="min-width: 25px; text-align: center;"></i>
+            <h2 class="sidebar-text" style="white-space: nowrap;">Churn AI</h2>
+        </div>
+        <button class="sidebar-toggle-btn" onclick="toggleSidebar()" style="background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; border-radius: 8px; transition: all 0.3s ease;">
+            <i class="fa-solid fa-angle-left toggle-icon" style="transition: transform 0.3s ease;"></i>
+        </button>
+    </div>
+    <div class="nav-links">
+        <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}" title="Dashboard">
+            <i class="fa-solid fa-chart-pie"></i> <span class="sidebar-text">Dashboard</span>
+        </a>
+        <a href="{{ url_for('predict') }}" class="{% if request.endpoint == 'predict' %}active{% endif %}" title="Risk Scoring">
+            <i class="fa-solid fa-magnifying-glass-chart"></i> <span class="sidebar-text">Risk Scoring</span>
+        </a>
+        <a href="{{ url_for('explain') }}" class="{% if request.endpoint == 'explain' %}active{% endif %}" title="Explainable AI">
+            <i class="fa-solid fa-brain"></i> <span class="sidebar-text">Explainable AI</span>
+        </a>
+        <a href="{{ url_for('pipeline') }}" class="{% if request.endpoint == 'pipeline' %}active{% endif %}" title="ML Pipeline">
+            <i class="fa-solid fa-server"></i> <span class="sidebar-text">ML Pipeline</span>
+        </a>
+    </div>
+    
+    <!-- Theme Switcher -->
+    <div style="padding: 15px 20px; text-align: center; margin-top: auto;">
+        <p class="sidebar-text" style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Theme</p>
+        <div class="theme-btn-container" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+            <button onclick="setTheme('light')" class="theme-btn" title="Light Mode" style="background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-primary); padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s;"><i class="fa-solid fa-sun"></i></button>
+            <button onclick="setTheme('dark')" class="theme-btn" title="Dark Mode" style="background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-primary); padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s;"><i class="fa-solid fa-moon"></i></button>
+            <button onclick="setTheme('custom')" class="theme-btn" title="Custom Mode" style="background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-primary); padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s;"><i class="fa-solid fa-palette"></i></button>
+        </div>
+    </div>
+    
+    <div class="sidebar-footer" style="padding: 20px;">
+        <hr style="margin-bottom: 15px; border-color: rgba(255,255,255,0.05);">
+        <a href="{{ url_for('logout') }}" style="color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 10px; transition: color 0.3s ease; overflow: hidden; white-space: nowrap;" title="Sign Out">
+            <i class="fa-solid fa-arrow-right-from-bracket" style="min-width: 20px; text-align: center;"></i> <span class="sidebar-text">Sign Out</span>
+        </a>
+    </div>
+</div>
+
+<script>
+    // Theme Handler
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('app-theme', theme);
+    }
+
+    // Sidebar Minimize/Maximize Handler
+    function toggleSidebar() {
+        const isMinimized = document.documentElement.classList.toggle('sidebar-minimized');
+        localStorage.setItem('app-sidebar', isMinimized ? 'minimized' : 'expanded');
+        
+        // Trigger resize event so Plotly charts auto-reflow
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 300);
+    }
+    
+    // Mobile Sidebar Toggle
+    document.addEventListener('DOMContentLoaded', () => {
+        const mobileBtn = document.querySelector('.mobile-menu-btn');
+        const sidebar = document.querySelector('.sidebar');
+        
+        if (mobileBtn && sidebar) {
+            mobileBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+            });
+            
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 992 && 
+                    !sidebar.contains(e.target) && 
+                    !mobileBtn.contains(e.target)) {
+                    sidebar.classList.remove('open');
+                }
+            });
+        }
+    });
+</script>
+{% endif %}
+
+<div class="main-content" {% if not session.get('logged_in') %}style="margin-left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;"{% endif %}>
+    
+    {% if session.get('logged_in') %}
+    <!-- SaaS Top Header -->
+    <div class="saas-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 0; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button class="mobile-menu-btn" style="display: none; background: none; border: none; color: var(--text-primary); font-size: 1.5rem; cursor: pointer;">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <h2 style="font-size: 1.2rem; margin: 0; color: var(--text-primary); font-weight: 500;">
+                <span style="color: var(--text-muted); font-weight: 400;">Workspace /</span> {{ request.endpoint|capitalize }}
+            </h2>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <button style="background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-primary); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative;">
+                <i class="fa-regular fa-bell"></i>
+                <span style="position: absolute; top: 10px; right: 10px; width: 8px; height: 8px; background: var(--accent-red); border-radius: 50%; box-shadow: 0 0 10px var(--accent-red);"></span>
+            </button>
+            <div style="display: flex; align-items: center; gap: 10px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 5px 15px 5px 5px; border-radius: 30px; cursor: pointer;">
+                <img src="https://ui-avatars.com/api/?name={{ current_user.username if current_user.is_authenticated else 'User' }}&background=3b82f6&color=fff" alt="Profile" style="width: 30px; height: 30px; border-radius: 50%;">
+                <span style="font-weight: 500; font-size: 0.9rem; color: var(--text-primary);">{{ current_user.username if current_user.is_authenticated else 'Admin' }}</span>
+                <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; color: var(--text-muted); margin-left: 5px;"></i>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% set messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="alert-container">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {% if category == 'error' %}
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    {% else %}
+                        <i class="fa-solid fa-circle-check"></i>
+                    {% endif %}
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    <div class="fade-in">
+        {% block content %}{% endblock %}
+    </div>
+</div>
+
+</body>
+</html>

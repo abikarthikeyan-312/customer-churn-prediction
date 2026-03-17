@@ -1,0 +1,9 @@
+{
+  "source_directories": [
+    "."
+  ],
+  "search_path": [
+    "C:\\Users\\Businessonbot\\AppData\\Roaming\\Python\\Python314\\site-packages",
+    "C:\\Python314\\Lib\\site-packages"
+  ]
+}

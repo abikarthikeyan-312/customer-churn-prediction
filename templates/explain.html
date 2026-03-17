@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="header">
+    <h1><i class="fa-solid fa-brain" style="color:var(--accent-purple); margin-right: 15px;"></i> Explainable AI (SHAP)</h1>
+    <p class="text-muted">Understand the driving factors behind your churn predictions.</p>
+</div>
+
+<div class="card fade-in" style="margin-bottom: 40px;">
+    {% if global_exp.success %}
+        <div class="metric-header" style="margin-bottom: 25px;">
+            <h3 style="font-size: 1.25rem; color: var(--text-primary);"><i class="fa-solid fa-globe" style="color: var(--accent-blue)"></i> Global Feature Importance</h3>
+        </div>
+        <p class="text-muted" style="margin-bottom: 20px;">Top factors driving customer churn overall in your dataset:</p>
+        
+        <div class="shap-container">
+            <img src="{{ global_exp.global_plot }}" alt="Global Feature Importance">
+        </div>
+    {% else %}
+        <div class="alert alert-error">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>{{ global_exp.error }}</span>
+        </div>
+    {% endif %}
+</div>
+
+<hr style="margin: 40px 0;">
+
+<div class="grid-2">
+    <div class="card fade-in">
+        <h3 style="margin-bottom: 20px; color: var(--text-primary);"><i class="fa-solid fa-magnifying-glass-chart" style="color: var(--accent-green)"></i> Local Explainability</h3>
+        <p class="text-muted" style="margin-bottom: 25px;">Why will this specific customer churn? Select one to see their waterfall risk plot.</p>
+        
+        <form method="POST" action="/explain" class="form-container">
+            <div class="form-group">
+                <select name="customer_index" required class="glass-input">
+                    <option value="" disabled selected>-- Select a Customer --</option>
+                    {% for s in samples %}
+                        <option value="{{ s.index }}" {% if selected_index == s.index %}selected{% endif %}>
+                            Customer #{{ s.index }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="primary-btn mt-2">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Explain Prediction
+            </button>
+        </form>
+    </div>
+
+    {% if local_exp %}
+        <div class="card fade-in" style="animation-delay: 0.1s;">
+            {% if local_exp.success %}
+                <h3 style="margin-bottom: 20px; color: var(--text-primary);"><i class="fa-solid fa-clipboard-user" style="color: var(--accent-indigo)"></i> Individual Waterfall Plot</h3>
+                <p class="text-muted" style="margin-bottom: 20px; font-size: 0.9rem;">
+                    <strong>How to read:</strong> Red bars push the prediction towards 'Churn'. Blue bars push towards 'Retain'.
+                </p>
+                <div class="shap-container">
+                    <img src="{{ local_exp.local_plot }}" alt="Local Explanation">
+                </div>
+            {% else %}
+                <div class="alert alert-error">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>{{ local_exp.error }}</span>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

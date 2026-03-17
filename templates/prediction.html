@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="header" style="display: flex; justify-content: space-between; align-items: flex-end;">
+    <div>
+        <h1>🎯 Customer Risk Scoring</h1>
+        <p class="text-muted">Predict individual customer churn probability.</p>
+    </div>
+    <div style="margin-bottom: 10px;">
+        <button onclick="window.print()" class="primary-btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
+            <i class="fa-solid fa-file-pdf"></i> Export PDF
+        </button>
+    </div>
+</div>
+
+<div class="grid-2">
+    <!-- Left Column: Selection Form -->
+    <div class="card fade-in">
+        <h3 style="margin-bottom: 20px; color: var(--text-muted);"><i class="fa-solid fa-user-check"></i> Select Customer</h3>
+        <form method="POST" action="/predict" class="form-container">
+            <div class="form-group">
+                <label>Choose a customer from your dataset:</label>
+                <select name="customer_index" required class="glass-input">
+                    <option value="" disabled selected>-- Select a Customer --</option>
+                    {% for s in samples %}
+                        <option value="{{ s.index }}" {% if selected_index == s.index %}selected{% endif %}>
+                            Customer #{{ s.index }} | Tenure: {{ s.tenure }} | Charges: ${{ s.MonthlyCharges }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="primary-btn mt-2">
+                <i class="fa-solid fa-calculator"></i> Compute Risk Score
+            </button>
+        </form>
+    </div>
+
+    <!-- Right Column: Results -->
+    {% if result %}
+        <div class="card result-card fade-in" style="animation-delay: 0.1s;">
+            {% if result.success %}
+                
+                <div class="result-header">
+                    {% set color_var = '#ef4444' if result.probability > 50 else '#10b981' %}
+                    {% set badge_class = 'badge-high' if result.probability > 50 else 'badge-low' %}
+                    
+                    <div class="radial-progress-container">
+                        <div class="radial-progress" style="--percentage: {{ result.probability }}; --fill-color: {{ color_var }};">
+                            <div class="radial-inner">
+                                <span class="radial-val">{{ result.probability }}<span style="font-size:1.2rem">%</span></span>
+                                <span class="radial-label">Churn Risk</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="risk-badge {{ badge_class }}">
+                        {% if result.probability > 50 %}<i class="fa-solid fa-triangle-exclamation"></i> {% else %}<i class="fa-solid fa-shield-check"></i> {% endif %}{{ result.risk_label }}
+                    </div>
+                </div>
+
+                <hr>
+
+                <h3 style="margin-bottom: 15px; color: var(--text-muted);"><i class="fa-solid fa-database"></i> Customer Profile Data</h3>
+                <div class="code-block">
+                    <pre style="margin: 0;"><code>{{ result.customer_data | tojson(indent=2) }}</code></pre>
+                </div>
+                
+            {% else %}
+                <div class="alert alert-error">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>{{ result.error }}</span>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<div class="card fade-in" style="margin-top: 30px;">
+    <h3 style="margin-bottom: 20px; color: var(--text-muted);"><i class="fa-solid fa-file-csv"></i> Batch Predictions</h3>
+    <p>Upload a CSV file containing hundreds of customers, and we will automatically append their risk scores and probability to the dataset for download.</p>
+    
+    <form method="POST" action="/predict_batch" enctype="multipart/form-data" class="form-container" style="margin-top: 20px;">
+        <div class="upload-zone" style="text-align: center; padding: 40px; border: 2px dashed rgba(255,255,255,0.1); border-radius: 12px; background: rgba(0,0,0,0.2);">
+            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 3rem; color: var(--accent-blue); margin-bottom: 15px;"></i>
+            <h4>Drag & Drop CSV File Here</h4>
+            <p class="text-muted" style="margin-bottom: 20px;">or click to browse</p>
+            <input type="file" name="batch_dataset" accept=".csv" required style="max-width: 100%;">
+        </div>
+        
+        <button type="submit" class="primary-btn mt-2" style="width: 100%; font-size: 1.1rem; justify-content: center;">
+            <i class="fa-solid fa-bolt"></i> Generate Predictions
+        </button>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="display: flex; justify-content: center; align-items: center; min-height: 80vh;">
+    <div class="card fade-in" style="width: 100%; max-width: 500px; padding: 40px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <i class="fa-solid fa-user-plus" style="font-size: 3rem; color: var(--accent-green); margin-bottom: 15px;"></i>
+            <h2 style="color: var(--text-primary); font-size: 1.8rem;">Create an Account</h2>
+            <p class="text-muted">Join the Churn AI Analytics platform</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('register') }}" class="form-container">
+            <div class="form-group">
+                <label style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 8px; display: block;">Username</label>
+                <div style="position: relative;">
+                    <i class="fa-solid fa-user" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                    <input type="text" name="username" required class="glass-input" style="padding-left: 45px; width: 100%;" placeholder="Choose a username">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+                <label style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 8px; display: block;">Email Address</label>
+                <div style="position: relative;">
+                    <i class="fa-solid fa-envelope" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                    <input type="email" name="email" required class="glass-input" style="padding-left: 45px; width: 100%;" placeholder="Enter your email">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+                <label style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 8px; display: block;">Password</label>
+                <div style="position: relative;">
+                    <i class="fa-solid fa-lock" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                    <input type="password" name="password" required class="glass-input" style="padding-left: 45px; width: 100%;" placeholder="Create a password">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+                <label style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 8px; display: block;">Confirm Password</label>
+                <div style="position: relative;">
+                    <i class="fa-solid fa-check-double" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                    <input type="password" name="confirm_password" required class="glass-input" style="padding-left: 45px; width: 100%;" placeholder="Confirm your password">
+                </div>
+            </div>
+
+            <button type="submit" class="primary-btn btn-green pulse-hover" style="width: 100%; margin-top: 30px; font-size: 1.1rem; padding: 12px;">
+                Register <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i>
+            </button>
+            
+            <div style="text-align: center; margin-top: 25px;">
+                <a href="{{ url_for('login') }}" style="color: var(--accent-blue); text-decoration: none; font-size: 0.9rem;">Already have an account? Sign in</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

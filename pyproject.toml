@@ -1,0 +1,8 @@
+[tool.pyright]
+include = ["src", "app.py"]
+stubPath = "src"
+extraPaths = [
+    ".",
+    "C:\\Python314\\Lib\\site-packages",
+    "C:\\Users\\Businessonbot\\AppData\\Roaming\\Python\\Python314\\site-packages"
+]
